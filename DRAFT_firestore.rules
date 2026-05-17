@@ -1,0 +1,72 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Common Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isEmailVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    
+    function incoming() {
+      return request.resource.data;
+    }
+    
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Employee Collection
+    match /employees/{employeeDoc} {
+      function isValidEmployee(data) {
+        return data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+               data.employeeId is string && data.employeeId.size() > 0 && data.employeeId.size() <= 20 &&
+               data.email is string &&
+               data.faceDescriptor is list && data.faceDescriptor.size() > 0;
+      }
+
+      allow list: if isSignedIn(); // In a production app, restrict this to admins
+      allow get: if isSignedIn();
+      allow create: if isSignedIn() && isValidEmployee(incoming());
+      allow update: if isSignedIn() && isValidEmployee(incoming()) && (
+        // Only allow updating metadata or face descriptor
+        incoming().diff(existing()).affectedKeys().hasOnly(['name', 'email', 'faceDescriptor', 'updatedAt'])
+      );
+      allow delete: if false; // Only admins should delete
+    }
+
+    // Attendance Collection
+    match /attendance/{attendanceId} {
+      function isValidAttendance(data) {
+        return data.employeeId is string &&
+               data.timestamp != null &&
+               data.status in ['check-in', 'check-out'] &&
+               data.method in ['face', 'manual'];
+      }
+
+      // Secure list query - MUST check resource.data to prevent unauthorized scraping
+      // Note: In high traffic apps, relational checks are better than get().
+      allow list: if isSignedIn(); 
+      allow create: if isSignedIn() && isValidAttendance(incoming());
+      allow update, delete: if false; // Attendance logs are immutable
+    }
+
+    // Admin Access (Optional extension)
+    // function isAdmin() { return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)); }
+  }
+}

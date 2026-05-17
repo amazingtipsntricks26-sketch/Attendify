@@ -1,0 +1,10 @@
+{
+  "name": "Attendify",
+  "description": "A comprehensive employee attendance system featuring live face recognition, offline sync, and an admin dashboard.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

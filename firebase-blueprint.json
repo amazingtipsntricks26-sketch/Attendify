@@ -1,0 +1,71 @@
+{
+  "entities": {
+    "Employee": {
+      "title": "Employee",
+      "description": "Represents an employee in the system.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "employeeId": { "type": "string", "description": "Unique alphanumeric employee ID" },
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "faceDescriptor": { "type": "array", "description": "The face embedding/descriptor array" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["employeeId", "name", "email", "faceDescriptor"]
+    },
+    "AttendanceRecord": {
+      "title": "Attendance Record",
+      "description": "Represents a single attendance log for an employee.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "employeeId": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "location": {
+          "type": "object",
+          "properties": {
+            "latitude": { "type": "number" },
+            "longitude": { "type": "number" }
+          }
+        },
+        "status": { "type": "string", "enum": ["check-in", "check-out"] },
+        "method": { "type": "string", "enum": ["face", "manual"] },
+        "offline": { "type": "boolean", "description": "Whether this was captured offline and synced later" }
+      },
+      "required": ["employeeId", "timestamp", "status"]
+    },
+    "Device": {
+      "title": "Device",
+      "description": "Information about devices used for attendance.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "deviceName": { "type": "string" },
+        "lastSyncAt": { "type": "string", "format": "date-time" },
+        "location": {
+          "type": "object",
+          "properties": {
+            "latitude": { "type": "number" },
+            "longitude": { "type": "number" }
+          }
+        }
+      }
+    }
+  },
+  "firestore": {
+    "employees": {
+      "schema": "Employee",
+      "description": "Collection of registered employees."
+    },
+    "attendance": {
+      "schema": "AttendanceRecord",
+      "description": "Time-series collection of attendance logs."
+    },
+    "devices": {
+      "schema": "Device",
+      "description": "Registered devices for attendance terminals."
+    }
+  }
+}
